@@ -9,10 +9,12 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
- * In-memory storage. In Week 4 this becomes a Spring Data JPA interface
- * backed by PostgreSQL, with almost the same method names.
+ * In-memory storage, now written with streams.
+ * In Week 4 this becomes a Spring Data JPA interface backed by PostgreSQL.
  */
 public class JobApplicationRepository {
 
@@ -28,55 +30,44 @@ public class JobApplicationRepository {
         return application;
     }
 
-    /** Returns null when not found. In Week 2 this changes to Optional<JobApplication>. */
-    public JobApplication findById(long id) {
-        return store.get(id);
+    /** Optional makes "might be missing" part of the method's return type. */
+    public Optional<JobApplication> findById(long id) {
+        return Optional.ofNullable(store.get(id));
     }
 
-    /** Returns a copy, so callers can't modify the internal map. */
+    /** A mutable copy: callers may sort or clear it without touching the store. */
     public List<JobApplication> findAll() {
         return new ArrayList<>(store.values());
     }
 
-    /** Newest applications first; saved-only jobs (no date) go last. */
+    /** Newest applications first; saved-only jobs (no date) go last. Returns an unmodifiable list. */
     public List<JobApplication> findAllSortedByDate() {
-        List<JobApplication> result = findAll();
-        result.sort(Comparator.comparing(
-                JobApplication::getApplicationDate,
-                Comparator.nullsLast(Comparator.reverseOrder())));
-        return result;
+        return store.values().stream()
+                .sorted(Comparator.comparing(
+                        JobApplication::getApplicationDate,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
     }
 
     public List<JobApplication> findByStatus(Status status) {
-        List<JobApplication> result = new ArrayList<>();
-        for (JobApplication app : store.values()) {
-            if (app.getStatus() == status) {
-                result.add(app);
-            }
-        }
-        return result;
+        return store.values().stream()
+                .filter(app -> app.getStatus() == status)
+                .toList();
     }
 
     public List<JobApplication> findByCompanyContaining(String text) {
         String needle = text.toLowerCase();
-        List<JobApplication> result = new ArrayList<>();
-        for (JobApplication app : store.values()) {
-            if (app.getCompanyName().toLowerCase().contains(needle)) {
-                result.add(app);
-            }
-        }
-        return result;
+        return store.values().stream()
+                .filter(app -> app.getCompanyName().toLowerCase().contains(needle))
+                .toList();
     }
 
-    /** Exact match ignoring case, so "nairobi" finds "Nairobi". Apps with no location never match. */
     public List<JobApplication> findByLocation(String location) {
-        List<JobApplication> result = new ArrayList<>();
-        for (JobApplication app : store.values()) {
-            if (location.equalsIgnoreCase(app.getLocation())) {
-                result.add(app);
-            }
-        }
-        return result;
+        String needle = location.toLowerCase();
+        return store.values().stream()
+                .filter(app -> app.getLocation() != null)
+                .filter(app -> app.getLocation().toLowerCase().contains(needle))
+                .toList();
     }
 
     public boolean deleteById(long id) {
@@ -88,14 +79,16 @@ public class JobApplicationRepository {
     }
 
     /** Every status appears in the result, even with a count of 0. */
-    public Map<Status, Integer> countByStatus() {
-        Map<Status, Integer> counts = new EnumMap<>(Status.class);
+    public Map<Status, Long> countByStatus() {
+        Map<Status, Long> counts = new EnumMap<>(Status.class);
         for (Status status : Status.values()) {
-            counts.put(status, 0);
+            counts.put(status, 0L);
         }
-        for (JobApplication app : store.values()) {
-            counts.merge(app.getStatus(), 1, Integer::sum);
-        }
+        counts.putAll(store.values().stream()
+                .collect(Collectors.groupingBy(
+                        JobApplication::getStatus,
+                        () -> new EnumMap<Status, Long>(Status.class),
+                        Collectors.counting())));
         return counts;
     }
 }

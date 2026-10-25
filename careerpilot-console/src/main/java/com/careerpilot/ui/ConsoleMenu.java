@@ -1,13 +1,15 @@
 package com.careerpilot.ui;
 
+import com.careerpilot.exception.CareerPilotException;
 import com.careerpilot.model.JobApplication;
 import com.careerpilot.model.RecruiterContact;
 import com.careerpilot.model.Status;
 import com.careerpilot.service.JobApplicationService;
+import com.careerpilot.model.ApplicationStats;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
+import java.util.function.Function;
 
 /** The console "front end". In Week 3 this is replaced by Spring MVC controllers and Thymeleaf pages. */
 public class ConsoleMenu {
@@ -30,7 +32,7 @@ public class ConsoleMenu {
             int choice = input.readInt("Choose an option: ", 0, 12);
             try {
                 handle(choice);
-            } catch (IllegalArgumentException | IllegalStateException e) {
+            } catch (CareerPilotException | IllegalArgumentException e) {
                 System.out.println("! " + e.getMessage());
             }
         }
@@ -94,9 +96,10 @@ public class ConsoleMenu {
         System.out.println("Interview:   " + orDash(app.getInterviewDate()));
         System.out.println("Follow-up:   " + orDash(app.getFollowUpDate()));
 
-        RecruiterContact r = app.getRecruiter();
-        System.out.println("Recruiter:   " + (r == null ? "-"
-                : r.name() + " | " + orDash(r.email()) + " | " + orDash(r.phone())));
+        String recruiterText = app.findRecruiter()
+                .map(r -> r.name() + " | " + orDash(r.email()) + " | " + orDash(r.phone()))
+                .orElse("-");
+        System.out.println("Recruiter:   " + recruiterText);
         System.out.println("Description: " + orDash(app.getJobDescription()));
         System.out.println("Notes:");
         System.out.println(app.getNotes().isEmpty() ? "  -" : app.getNotes());
@@ -146,35 +149,53 @@ public class ConsoleMenu {
         System.out.println("Recruiter saved.");
     }
 
-    private void showDashboard() {
+       private void showDashboard() {
         LocalDate today = LocalDate.now();
-        System.out.println(DIVIDER);
-        System.out.println("Total applications:         " + service.totalCount());
-        System.out.println("Active (applied/interview): " + service.activeCount());
+        ApplicationStats stats = service.stats();
 
-        Map<Status, Integer> summary = service.statusSummary();
-        for (Map.Entry<Status, Integer> entry : summary.entrySet()) {
-            System.out.printf("  %-10s %d%n", entry.getKey().getLabel(), entry.getValue());
-        }
+        System.out.println(DIVIDER);
+        System.out.println("Total applications:         " + stats.total());
+        System.out.println("Active (applied/interview): " + stats.active());
+        service.nextInterview(today).ifPresentOrElse(
+                next -> System.out.println("Next interview:             "
+                        + next.getInterviewDate() + "  " + next.getCompanyName()),
+                () -> System.out.println("Next interview:             none scheduled"));
 
         System.out.println();
-        System.out.println("Upcoming interviews:");
-        List<JobApplication> upcoming = service.upcomingInterviews(today);
-        if (upcoming.isEmpty()) {
-            System.out.println("  none");
-        }
-        for (JobApplication app : upcoming) {
-            System.out.printf("  %s  %s @ %s%n", app.getInterviewDate(), app.getJobTitle(), app.getCompanyName());
-        }
+        System.out.println("By status:");
+        service.statusSummary().forEach((status, count) ->
+                System.out.printf("  %-10s %d%n", status.getLabel(), count));
 
-        System.out.println("Overdue follow-ups:");
-        List<JobApplication> overdue = service.overdueFollowUps(today);
-        if (overdue.isEmpty()) {
+        System.out.println();
+        System.out.printf("Interview rate: %.0f%%   Offer rate: %.0f%%   (of %d submitted)%n",
+                stats.interviewRate(), stats.offerRate(), stats.submitted());
+        service.averageDaysWaiting(today).ifPresent(avg ->
+                System.out.printf("Average wait on active applications: %.1f days%n", avg));
+
+        System.out.println();
+        System.out.println("Applications per month:");
+        service.applicationsPerMonth().forEach((month, count) ->
+                System.out.printf("  %s  %s %d%n", month, "#".repeat(count.intValue()), count));
+
+        System.out.println();
+        System.out.println("Companies: " + String.join(", ", service.companiesAppliedTo()));
+
+        printDatedList("Upcoming interviews:", service.upcomingInterviews(today), JobApplication::getInterviewDate);
+        printDatedList("Overdue follow-ups:", service.overdueFollowUps(today), JobApplication::getFollowUpDate);
+    }
+
+    /** One helper for both dated lists. The Function says which date to show. */
+    private void printDatedList(String heading, List<JobApplication> apps,
+                                Function<JobApplication, LocalDate> dateOf) {
+        System.out.println();
+        System.out.println(heading);
+        if (apps.isEmpty()) {
             System.out.println("  none");
+            return;
         }
-        for (JobApplication app : overdue) {
-            System.out.printf("  %s  %s @ %s%n", app.getFollowUpDate(), app.getJobTitle(), app.getCompanyName());
-        }
+        apps.forEach(app -> System.out.printf("  %s  %s @ %s%n",
+                dateOf.apply(app), app.getJobTitle(), app.getCompanyName()));
+    
     }
 
     private void filterByStatus() {

@@ -1,6 +1,7 @@
 package com.careerpilot.model;
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.time.temporal.ChronoUnit;
 
 /**
@@ -86,6 +87,11 @@ public class JobApplication {
         public RecruiterContact getRecruiter() { return recruiter; }
     public void setRecruiter(RecruiterContact recruiter) { this.recruiter = recruiter; }
 
+    /** Optional view of the recruiter, so callers can't forget the "no recruiter" case. */
+    public Optional<RecruiterContact> findRecruiter() {
+        return Optional.ofNullable(recruiter);
+    }
+
     public LocalDate getInterviewDate() { return interviewDate; }
     public void setInterviewDate(LocalDate interviewDate) { this.interviewDate = interviewDate; }
 
@@ -94,9 +100,9 @@ public class JobApplication {
 
     public String getNotes() { return notes; }
 
-    /** Appends a dated note on its own line. */
-    public void addNote(String note) {
-        String line = "[" + LocalDate.now() + "] " + requireText(note, "Note");
+    /** Appends a note dated with the given day on its own line. */
+    public void addNote(String note, LocalDate date) {
+        String line = "[" + date + "] " + requireText(note, "Note");
         notes = notes.isEmpty() ? line : notes + System.lineSeparator() + line;
     }
 
