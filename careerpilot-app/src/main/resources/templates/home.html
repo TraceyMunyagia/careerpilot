@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Home')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar('home')}"></nav>
+
+<main class="flex-grow-1">
+
+  <!-- Hero -->
+  <section class="cp-hero py-5">
+    <div class="container py-lg-4">
+      <div class="row align-items-center g-5">
+        <div class="col-lg-7">
+          <p class="text-uppercase small fw-semibold cp-eyebrow mb-2" th:text="${greeting}">Good morning</p>
+          <h1 class="display-5 fw-bold mb-3">Every application organised. Every interview prepared.</h1>
+          <p class="lead text-body-secondary mb-4" th:text="${app.tagline}">Tagline</p>
+          <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-primary btn-lg" th:href="@{/applications}">
+              <i class="bi bi-briefcase me-1"></i>My applications
+            </a>
+            <a class="btn btn-outline-secondary btn-lg" th:href="@{/dashboard}">
+              <i class="bi bi-bar-chart me-1"></i>Dashboard
+            </a>
+          </div>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="card cp-card shadow-sm">
+            <div class="card-body p-4">
+              <h2 class="h6 text-body-secondary mb-3">Your application pipeline</h2>
+              <ol class="list-unstyled d-grid gap-2 mb-0">
+                <li th:each="s, iter : ${statuses}" class="d-flex align-items-center gap-3">
+                  <span class="cp-step-number" th:text="${iter.count}">1</span>
+                  <span class="badge rounded-pill cp-status"
+                        th:classappend="'cp-status-' + ${#strings.toLowerCase(s.name())}"
+                        th:text="${s.label}">Saved</span>
+                  <span class="small text-body-secondary ms-auto"
+                        th:text="${s.active} ? 'in progress' : (${s.closed} ? 'outcome' : 'not yet applied')">note</span>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="py-5">
+    <div class="container">
+      <div class="row g-4">
+        <div class="col-md-4">
+          <div class="card cp-card h-100">
+            <div class="card-body p-4">
+              <span class="cp-feature-icon mb-3"><i class="bi bi-kanban"></i></span>
+              <h3 class="h5">Track applications</h3>
+              <p class="text-body-secondary mb-0">Statuses, interview dates, recruiter contacts and follow-ups in one place.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card cp-card h-100">
+            <div class="card-body p-4">
+              <span class="cp-feature-icon mb-3"><i class="bi bi-file-earmark-person"></i></span>
+              <h3 class="h5">Analyse your CV</h3>
+              <p class="text-body-secondary mb-0">Match your CV against a job description and see the skills you're missing.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card cp-card h-100">
+            <div class="card-body p-4">
+              <span class="cp-feature-icon mb-3"><i class="bi bi-chat-square-text"></i></span>
+              <h3 class="h5">Prepare for interviews</h3>
+              <p class="text-body-secondary mb-0">Role-specific questions, guidance on answers, and notes saved per job.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

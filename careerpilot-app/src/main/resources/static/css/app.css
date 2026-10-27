@@ -1,0 +1,105 @@
+/* ---------- Brand tokens ---------- */
+:root {
+  --cp-navy: #0f1b3d;
+  --cp-teal: #14b8a6;
+  --cp-teal-dark: #0d9488;
+  --cp-teal-soft: #e8f7f5;
+  --cp-surface: #f6f8fb;
+  --cp-border: #e5e7eb;
+}
+
+body {
+  background: var(--cp-surface);
+}
+
+/* ---------- Navbar & footer ---------- */
+.cp-navbar {
+  background: var(--cp-navy);
+}
+
+.cp-navbar .nav-link.active {
+  color: #fff;
+  box-shadow: inset 0 -2px 0 var(--cp-teal);
+}
+
+.cp-footer {
+  background: #fff;
+  border-top: 1px solid var(--cp-border);
+}
+
+/* ---------- Buttons: retheme Bootstrap's primary to teal ---------- */
+.btn-primary {
+  --bs-btn-bg: var(--cp-teal-dark);
+  --bs-btn-border-color: var(--cp-teal-dark);
+  --bs-btn-hover-bg: #0f766e;
+  --bs-btn-hover-border-color: #0f766e;
+  --bs-btn-active-bg: #115e59;
+  --bs-btn-active-border-color: #115e59;
+  --bs-btn-disabled-bg: var(--cp-teal-dark);
+  --bs-btn-disabled-border-color: var(--cp-teal-dark);
+}
+
+/* ---------- Hero ---------- */
+.cp-hero {
+  background: linear-gradient(135deg, #ffffff 0%, var(--cp-teal-soft) 100%);
+  border-bottom: 1px solid var(--cp-border);
+}
+
+.cp-eyebrow {
+  color: var(--cp-teal-dark);
+  letter-spacing: 0.08em;
+}
+
+/* ---------- Cards ---------- */
+.cp-card {
+  border: 1px solid var(--cp-border);
+  border-radius: 0.75rem;
+}
+
+.cp-feature-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.6rem;
+  background: var(--cp-teal-soft);
+  color: var(--cp-teal-dark);
+  font-size: 1.25rem;
+}
+
+.cp-stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.cp-progress .progress-bar {
+  background: var(--cp-teal-dark);
+}
+
+/* ---------- Pipeline & status badges ---------- */
+.cp-step-number {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--cp-surface);
+  border: 1px solid var(--cp-border);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.cp-status           { font-weight: 500; }
+.cp-status-saved     { background: #e5e7eb; color: #374151; }
+.cp-status-applied   { background: #dbeafe; color: #1e40af; }
+.cp-status-interview { background: #fef3c7; color: #92400e; }
+.cp-status-rejected  { background: #fee2e2; color: #991b1b; }
+.cp-status-offer     { background: #dcfce7; color: #166534; }
+
+/* ---------- Errors ---------- */
+.cp-error-code {
+  color: var(--cp-teal-dark);
+}

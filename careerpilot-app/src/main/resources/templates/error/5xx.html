@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Server error')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar('')}"></nav>
+
+<main class="flex-grow-1 d-flex align-items-center">
+  <div class="container text-center py-5">
+    <p class="display-1 fw-bold cp-error-code mb-0" th:text="${status}">500</p>
+    <h1 class="h3 mb-3">Something went wrong on our side</h1>
+    <!-- Never show technical details to users; they are in the server log -->
+    <p class="text-body-secondary mb-4">Please try again in a moment.</p>
+    <a class="btn btn-primary" th:href="@{/}"><i class="bi bi-house me-1"></i>Back to home</a>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

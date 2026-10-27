@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Dashboard')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar('dashboard')}"></nav>
+
+<main class="flex-grow-1 py-4">
+  <div class="container">
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+      <h1 class="h3 mb-0">Dashboard</h1>
+      <span class="small text-body-secondary"
+            th:text="${#dates.format(#dates.createNow(), 'EEEE, d MMMM yyyy')}">Monday, 9 November 2026</span>
+    </div>
+
+    <div class="alert alert-info d-flex gap-2 align-items-start" th:if="${stats.total() == 0}">
+      <i class="bi bi-info-circle mt-1"></i>
+      <div>No applications yet. Once you start tracking jobs, your numbers will appear here.</div>
+    </div>
+
+    <!-- Headline numbers -->
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="card cp-card h-100">
+          <div class="card-body">
+            <div class="small text-body-secondary mb-2"><i class="bi bi-briefcase me-1"></i>Total applications</div>
+            <div class="cp-stat-value" th:text="${stats.total()}">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card cp-card h-100">
+          <div class="card-body">
+            <div class="small text-body-secondary mb-2"><i class="bi bi-activity me-1"></i>Active</div>
+            <div class="cp-stat-value" th:text="${stats.active()}">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card cp-card h-100">
+          <div class="card-body">
+            <div class="small text-body-secondary mb-2"><i class="bi bi-people me-1"></i>Interviews</div>
+            <div class="cp-stat-value" th:text="${stats.interviews()}">0</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="card cp-card h-100">
+          <div class="card-body">
+            <div class="small text-body-secondary mb-2"><i class="bi bi-trophy me-1"></i>Offers</div>
+            <div class="cp-stat-value" th:text="${stats.offers()}">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rates -->
+    <div class="row g-3">
+      <div class="col-md-6">
+        <div class="card cp-card h-100">
+          <div class="card-body">
+            <h2 class="h6 mb-3">Interview rate</h2>
+            <div class="d-flex align-items-baseline gap-2">
+              <span class="cp-stat-value" th:text="${#numbers.formatDecimal(stats.interviewRate(), 1, 0)} + '%'">0%</span>
+              <span class="small text-body-secondary" th:text="'of ' + ${stats.submitted()} + ' submitted'">of 0 submitted</span>
+            </div>
+            <div class="progress cp-progress mt-3" role="progressbar" aria-label="Interview rate">
+              <div class="progress-bar" th:style="'width: ' + ${stats.interviewRate()} + '%'"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="card cp-card h-100">
+          <div class="card-body">
+            <h2 class="h6 mb-3">Offer rate</h2>
+            <div class="d-flex align-items-baseline gap-2">
+              <span class="cp-stat-value" th:text="${#numbers.formatDecimal(stats.offerRate(), 1, 0)} + '%'">0%</span>
+              <span class="small text-body-secondary" th:text="'of ' + ${stats.submitted()} + ' submitted'">of 0 submitted</span>
+            </div>
+            <div class="progress cp-progress mt-3" role="progressbar" aria-label="Offer rate">
+              <div class="progress-bar" th:style="'width: ' + ${stats.offerRate()} + '%'"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>
