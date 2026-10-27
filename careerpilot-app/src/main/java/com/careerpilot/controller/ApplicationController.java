@@ -1,7 +1,7 @@
 package com.careerpilot.controller;
 
-import com.careerpilot.exception.ApplicationNotFoundException;
 import com.careerpilot.model.Status;
+import com.careerpilot.service.JobApplicationService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,24 +9,30 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
-
 @Controller
 @RequestMapping("/applications")
 public class ApplicationController {
 
-    /** GET /applications or /applications?status=INTERVIEW (Spring converts the text to the enum). */
+    private final JobApplicationService jobApplicationService;
+
+    public ApplicationController(JobApplicationService jobApplicationService) {
+        this.jobApplicationService = jobApplicationService;
+    }
+
+    /** GET /applications or /applications?status=INTERVIEW */
     @GetMapping
     public String list(@RequestParam(required = false) Status status, Model model) {
         model.addAttribute("statuses", Status.values());
         model.addAttribute("selectedStatus", status);
-        model.addAttribute("applications", List.of()); // real data arrives in Week 6
+        model.addAttribute("applications", jobApplicationService.listForCurrentUser(status));
         return "applications/list";
     }
 
-    /** GET /applications/5. There's no data until Week 4, so every id is "not found" for now. */
+    /** GET /applications/5. Throws ApplicationNotFoundException (→ 404) if missing or not yours. */
     @GetMapping("/{id}")
-    public String detail(@PathVariable long id) {
-        throw new ApplicationNotFoundException(id);
+    public String detail(@PathVariable long id, Model model) {
+        // Not "application": Thymeleaf reserves ${application} for servlet-context attributes
+        model.addAttribute("jobApplication", jobApplicationService.getForCurrentUser(id));
+        return "applications/detail";
     }
 }

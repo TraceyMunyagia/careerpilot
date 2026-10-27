@@ -14,9 +14,11 @@ public class DashboardController {
         this.dashboardService = dashboardService;
     }
 
-    @GetMapping("/dashboard")
+        @GetMapping("/dashboard")
     public String dashboard(Model model) {
         model.addAttribute("stats", dashboardService.currentStats());
+        model.addAttribute("upcoming", dashboardService.upcomingInterviews());
+        model.addAttribute("overdue", dashboardService.overdueFollowUps());
         return "dashboard";
     }
 }

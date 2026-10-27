@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${jobApplication.companyName})}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar('applications')}"></nav>
+
+<main class="flex-grow-1 py-4">
+  <div class="container">
+
+    <a th:href="@{/applications}" class="small text-decoration-none">
+      <i class="bi bi-arrow-left"></i> All applications
+    </a>
+
+    <!-- Header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mt-2 mb-4">
+      <div>
+        <h1 class="h3 mb-1" th:text="${jobApplication.jobTitle}">Job title</h1>
+        <p class="text-body-secondary mb-0">
+          <span th:text="${jobApplication.companyName}">Company</span>
+          <span th:if="${jobApplication.location != null}" th:text="' · ' + ${jobApplication.location}"> · Nairobi</span>
+        </p>
+      </div>
+      <span class="badge rounded-pill cp-status fs-6"
+            th:classappend="'cp-status-' + ${#strings.toLowerCase(jobApplication.status.name())}"
+            th:text="${jobApplication.status.label}">Interview</span>
+    </div>
+
+    <div class="row g-3">
+
+      <!-- Main column -->
+      <div class="col-lg-8 d-grid gap-3 align-content-start">
+        <div class="card cp-card">
+          <div class="card-body">
+            <h2 class="h6 mb-3">Job description</h2>
+            <p class="mb-0 cp-prewrap" th:if="${!#strings.isEmpty(jobApplication.jobDescription)}"
+               th:text="${jobApplication.jobDescription}">Description</p>
+            <p class="mb-0 text-body-secondary" th:if="${#strings.isEmpty(jobApplication.jobDescription)}">
+              No job description saved yet.
+            </p>
+          </div>
+        </div>
+
+        <div class="card cp-card">
+          <div class="card-body">
+            <h2 class="h6 mb-3">Notes</h2>
+            <p class="mb-0 cp-prewrap small" th:if="${!#strings.isEmpty(jobApplication.notes)}"
+               th:text="${jobApplication.notes}">[2026-11-02] Note</p>
+            <p class="mb-0 text-body-secondary" th:if="${#strings.isEmpty(jobApplication.notes)}">No notes yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side column -->
+      <div class="col-lg-4 d-grid gap-3 align-content-start">
+        <div class="card cp-card">
+          <div class="card-body">
+            <h2 class="h6 mb-3">Key dates</h2>
+            <dl class="row small mb-0">
+              <dt class="col-5 fw-normal text-body-secondary">Applied</dt>
+              <dd class="col-7"
+                  th:text="${jobApplication.applicationDate != null} ? ${#temporals.format(jobApplication.applicationDate, 'd MMM yyyy')} : '—'">—</dd>
+              <dt class="col-5 fw-normal text-body-secondary">Interview</dt>
+              <dd class="col-7"
+                  th:text="${jobApplication.interviewDate != null} ? ${#temporals.format(jobApplication.interviewDate, 'EEE d MMM yyyy')} : '—'">—</dd>
+              <dt class="col-5 fw-normal text-body-secondary">Follow up</dt>
+              <dd class="col-7 mb-0"
+                  th:text="${jobApplication.followUpDate != null} ? ${#temporals.format(jobApplication.followUpDate, 'd MMM yyyy')} : '—'">—</dd>
+            </dl>
+            <a th:if="${jobApplication.applicationLink != null}" th:href="${jobApplication.applicationLink}"
+               target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary mt-3">
+              View job posting <i class="bi bi-box-arrow-up-right ms-1"></i>
+            </a>
+          </div>
+        </div>
+
+        <div class="card cp-card">
+          <div class="card-body" th:with="r=${jobApplication.recruiter}">
+            <h2 class="h6 mb-3">Recruiter</h2>
+            <p class="text-body-secondary small mb-0" th:if="${r == null}">No recruiter saved.</p>
+            <div th:unless="${r == null}">
+              <div class="fw-semibold" th:text="${r.name()}">Jane Wanjiku</div>
+              <a class="d-block small" th:if="${r.hasEmail()}"
+                 th:href="'mailto:' + ${r.email()}" th:text="${r.email()}">jane@example.com</a>
+              <a class="d-block small" th:if="${r.phone() != null}"
+                 th:href="'tel:' + ${r.phone()}" th:text="${r.phone()}">+254700000001</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

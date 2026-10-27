@@ -38,6 +38,48 @@
       </div>
     </div>
 
+    <!-- Table -->
+    <div class="card cp-card" th:unless="${#lists.isEmpty(applications)}">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 cp-table">
+          <thead class="table-light">
+          <tr>
+            <th scope="col">Company</th>
+            <th scope="col">Role</th>
+            <th scope="col" class="d-none d-md-table-cell">Location</th>
+            <th scope="col">Status</th>
+            <th scope="col" class="d-none d-md-table-cell">Applied</th>
+            <th scope="col" class="d-none d-lg-table-cell">Interview</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="a : ${applications}">
+            <td class="fw-semibold" th:text="${a.companyName()}">Company</td>
+            <td th:text="${a.jobTitle()}">Role</td>
+            <td class="d-none d-md-table-cell" th:text="${a.location() ?: '—'}">Nairobi</td>
+            <td>
+              <span class="badge rounded-pill cp-status"
+                    th:classappend="'cp-status-' + ${#strings.toLowerCase(a.status().name())}"
+                    th:text="${a.status().label}">Applied</span>
+            </td>
+            <td class="d-none d-md-table-cell"
+                th:text="${a.applicationDate() != null} ? ${#temporals.format(a.applicationDate(), 'd MMM yyyy')} : '—'">
+              2 Nov 2026
+            </td>
+            <td class="d-none d-lg-table-cell"
+                th:text="${a.interviewDate() != null} ? ${#temporals.format(a.interviewDate(), 'd MMM yyyy')} : '—'">
+              —
+            </td>
+            <td class="text-end">
+              <a class="btn btn-sm btn-outline-secondary" th:href="@{/applications/{id}(id=${a.id()})}">View</a>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 </main>
 

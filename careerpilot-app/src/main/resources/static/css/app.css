@@ -103,3 +103,16 @@ body {
 .cp-error-code {
   color: var(--cp-teal-dark);
 }
+
+/* ---------- Tables & long text ---------- */
+.cp-table th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6b7280;
+}
+
+.cp-prewrap {
+  white-space: pre-line; /* keep the line breaks in notes and descriptions */
+}

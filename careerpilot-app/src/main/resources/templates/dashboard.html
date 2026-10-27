@@ -86,6 +86,48 @@
       </div>
     </div>
 
+        <!-- Upcoming interviews & overdue follow-ups -->
+    <div class="row g-3 mt-1">
+      <div class="col-lg-6">
+        <div class="card cp-card h-100">
+          <div class="card-body">
+            <h2 class="h6 mb-3"><i class="bi bi-calendar-event me-1"></i>Upcoming interviews</h2>
+            <p class="small text-body-secondary mb-0" th:if="${#lists.isEmpty(upcoming)}">Nothing scheduled.</p>
+            <ul class="list-group list-group-flush" th:unless="${#lists.isEmpty(upcoming)}">
+              <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2"
+                  th:each="a : ${upcoming}">
+                <a class="text-decoration-none" th:href="@{/applications/{id}(id=${a.id()})}">
+                  <span class="fw-semibold" th:text="${a.companyName()}">Company</span>
+                  <span class="text-body-secondary" th:text="'· ' + ${a.jobTitle()}">· Role</span>
+                </a>
+                <span class="badge text-bg-light"
+                      th:text="${#temporals.format(a.interviewDate(), 'EEE d MMM')}">Thu 12 Nov</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card cp-card h-100">
+          <div class="card-body">
+            <h2 class="h6 mb-3"><i class="bi bi-alarm me-1"></i>Overdue follow-ups</h2>
+            <p class="small text-body-secondary mb-0" th:if="${#lists.isEmpty(overdue)}">You're all caught up.</p>
+            <ul class="list-group list-group-flush" th:unless="${#lists.isEmpty(overdue)}">
+              <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2"
+                  th:each="a : ${overdue}">
+                <a class="text-decoration-none" th:href="@{/applications/{id}(id=${a.id()})}">
+                  <span class="fw-semibold" th:text="${a.companyName()}">Company</span>
+                  <span class="text-body-secondary" th:text="'· ' + ${a.jobTitle()}">· Role</span>
+                </a>
+                <span class="badge text-bg-danger"
+                      th:text="'Due ' + ${#temporals.format(a.followUpDate(), 'd MMM')}">Due 7 Nov</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </main>
 
