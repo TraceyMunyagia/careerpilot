@@ -1,6 +1,7 @@
 package com.careerpilot.controller;
 
 import com.careerpilot.config.AppProperties;
+import com.careerpilot.config.SecurityConfig;
 import com.careerpilot.dto.ApplicationSummary;
 import com.careerpilot.exception.ApplicationNotFoundException;
 import com.careerpilot.model.JobApplication;
@@ -11,6 +12,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -28,6 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(ApplicationController.class)
 @EnableConfigurationProperties(AppProperties.class)
+@Import(SecurityConfig.class)
+@WithMockUser // every test runs as a logged-in user
 class ApplicationControllerTest {
 
     @Autowired
@@ -35,6 +41,9 @@ class ApplicationControllerTest {
 
     @MockitoBean
     private JobApplicationService jobApplicationService;
+
+    @MockitoBean
+    private UserDetailsService userDetailsService;
 
     private static ApplicationSummary summary(long id, String company, Status status) {
         return new ApplicationSummary(id, company, "Java Developer", "Nairobi", status,

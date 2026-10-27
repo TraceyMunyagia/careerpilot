@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,14 +27,17 @@ import java.time.LocalDate;
 public class DataSeeder implements ApplicationRunner {
 
     public static final String DEMO_EMAIL = "demo@careerpilot.local";
+    public static final String DEMO_PASSWORD = "Password123!";
 
     private static final Logger log = LoggerFactory.getLogger(DataSeeder.class);
 
-    private final UserRepository userRepository;
+      private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
     private final Clock clock;
 
-    public DataSeeder(UserRepository userRepository, Clock clock) {
+    public DataSeeder(UserRepository userRepository, PasswordEncoder passwordEncoder, Clock clock) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
         this.clock = clock;
     }
 
@@ -47,8 +51,8 @@ public class DataSeeder implements ApplicationRunner {
 
         LocalDate today = LocalDate.now(clock);
         // "{noop}" means "not hashed". Week 5 replaces this with a BCrypt hash.
-        User demo = new User(DEMO_EMAIL, "Demo User", "{noop}change-me");
-
+        User demo = new User(DEMO_EMAIL, "Demo User", passwordEncoder.encode(DEMO_PASSWORD));
+        
         JobApplication safaricom = new JobApplication("Safaricom", "Junior Java Developer", "Nairobi", today.minusDays(10));
         safaricom.setStatus(Status.INTERVIEW);
         safaricom.setInterviewDate(today.plusDays(3));

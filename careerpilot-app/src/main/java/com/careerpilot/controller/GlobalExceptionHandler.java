@@ -1,5 +1,6 @@
 package com.careerpilot.controller;
 
+import com.careerpilot.dto.CurrentUserView;
 import com.careerpilot.exception.ApplicationNotFoundException;
 import com.careerpilot.exception.BusinessRuleException;
 import com.careerpilot.exception.CareerPilotException;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -47,6 +49,7 @@ public class GlobalExceptionHandler {
         mav.addObject("error", status.getReasonPhrase());
         mav.addObject("message", message);
         mav.addObject("path", request.getRequestURI());
+        mav.addObject("currentUser", CurrentUserView.from(SecurityContextHolder.getContext().getAuthentication()));
         return mav;
     }
 }

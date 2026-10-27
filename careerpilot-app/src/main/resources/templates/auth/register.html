@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Create account')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar('register')}"></nav>
+
+<main class="flex-grow-1 d-flex align-items-center py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-sm-10 col-md-7 col-lg-5">
+        <div class="card cp-card shadow-sm">
+          <div class="card-body p-4 p-md-5">
+            <h1 class="h4 mb-1">Create your account</h1>
+            <p class="text-body-secondary mb-4">Track applications, analyse your CV and prepare for interviews.</p>
+
+            <form th:action="@{/register}" th:object="${form}" method="post" novalidate>
+
+              <div class="mb-3">
+                <label for="fullName" class="form-label">Full name</label>
+                <input type="text" th:field="*{fullName}" class="form-control"
+                       th:errorclass="is-invalid" autocomplete="name" autofocus>
+                <div class="invalid-feedback" th:errors="*{fullName}">Name error</div>
+              </div>
+
+              <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" th:field="*{email}" class="form-control"
+                       th:errorclass="is-invalid" autocomplete="email">
+                <div class="invalid-feedback" th:errors="*{email}">Email error</div>
+              </div>
+
+              <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <!-- Thymeleaf never re-fills password fields, by design -->
+                <input type="password" th:field="*{password}" class="form-control"
+                       th:errorclass="is-invalid" autocomplete="new-password" aria-describedby="passwordHelp">
+                <div id="passwordHelp" class="form-text">At least 8 characters, including a letter and a number.</div>
+                <div class="invalid-feedback" th:errors="*{password}">Password error</div>
+              </div>
+
+              <div class="mb-4">
+                <label for="confirmPassword" class="form-label">Confirm password</label>
+                <input type="password" th:field="*{confirmPassword}" class="form-control"
+                       th:classappend="${#fields.hasErrors('confirmPassword') or #fields.hasErrors('passwordConfirmed')} ? 'is-invalid'"
+                       autocomplete="new-password">
+                <div class="invalid-feedback" th:errors="*{confirmPassword}">Confirm error</div>
+                <div class="invalid-feedback" th:errors="*{passwordConfirmed}">Mismatch error</div>
+              </div>
+
+              <button type="submit" class="btn btn-primary w-100">Create account</button>
+            </form>
+
+            <p class="small text-center text-body-secondary mt-4 mb-0">
+              Already have an account? <a th:href="@{/login}">Log in</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>

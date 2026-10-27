@@ -25,17 +25,43 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="mainNav">
-      <ul class="navbar-nav ms-auto">
-        <li class="nav-item">
-          <a class="nav-link" th:href="@{/}" th:classappend="${active == 'home'} ? 'active'">Home</a>
-        </li>
+            <!-- Logged in: app links + user menu -->
+      <ul class="navbar-nav ms-auto align-items-lg-center" th:if="${currentUser != null}">
         <li class="nav-item">
           <a class="nav-link" th:href="@{/dashboard}" th:classappend="${active == 'dashboard'} ? 'active'">Dashboard</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" th:href="@{/applications}" th:classappend="${active == 'applications'} ? 'active'">Applications</a>
         </li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-person-circle me-1"></i><span th:text="${currentUser.firstName()}">Tracey</span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li>
+              <span class="dropdown-item-text small">
+                <span class="d-block fw-semibold" th:text="${currentUser.fullName()}">Tracey M</span>
+                <span class="text-body-secondary" th:text="${currentUser.email()}">tracey@example.com</span>
+              </span>
+            </li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <!-- Logout must be a POST with a CSRF token, so it's a form, not a link -->
+              <form th:action="@{/logout}" method="post">
+                <button type="submit" class="dropdown-item">
+                  <i class="bi bi-box-arrow-right me-2"></i>Log out
+                </button>
+              </form>
+            </li>
+          </ul>
+        </li>
       </ul>
+
+      <!-- Logged out: auth buttons -->
+      <div class="ms-auto d-flex gap-2 py-2 py-lg-0" th:unless="${currentUser != null}">
+        <a class="btn btn-sm btn-outline-light" th:href="@{/login}">Log in</a>
+        <a class="btn btn-sm btn-primary" th:href="@{/register}">Get started</a>
+      </div>
     </div>
   </div>
 </nav>

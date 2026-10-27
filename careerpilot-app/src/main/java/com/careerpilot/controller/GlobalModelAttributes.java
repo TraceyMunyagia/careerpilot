@@ -1,6 +1,8 @@
 package com.careerpilot.controller;
 
 import com.careerpilot.config.AppProperties;
+import com.careerpilot.dto.CurrentUserView;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
@@ -17,5 +19,11 @@ public class GlobalModelAttributes {
     @ModelAttribute("app")
     public AppProperties app() {
         return appProperties;
+    }
+
+    /** null when nobody is logged in, so templates can check ${currentUser != null}. */
+    @ModelAttribute("currentUser")
+    public CurrentUserView currentUser() {
+        return CurrentUserView.from(SecurityContextHolder.getContext().getAuthentication());
     }
 }

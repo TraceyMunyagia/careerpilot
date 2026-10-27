@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Log in')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar('login')}"></nav>
+
+<main class="flex-grow-1 d-flex align-items-center py-5">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-sm-10 col-md-7 col-lg-5">
+
+        <div class="card cp-card shadow-sm">
+          <div class="card-body p-4 p-md-5">
+            <h1 class="h4 mb-1">Welcome back</h1>
+            <p class="text-body-secondary mb-4">Log in to continue to your applications.</p>
+
+            <div class="alert alert-danger py-2" role="alert" th:if="${param.error != null}">
+              Incorrect email or password.
+            </div>
+            <div class="alert alert-success py-2" role="status" th:if="${param.logout != null}">
+              You've been logged out.
+            </div>
+            <div class="alert alert-success py-2" role="status" th:if="${param.registered != null}">
+              Account created. Log in to get started.
+            </div>
+
+            <!-- th:action adds the hidden CSRF token field automatically -->
+            <form th:action="@{/login}" method="post" novalidate>
+              <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" id="email" name="email" class="form-control"
+                       autocomplete="username" required autofocus th:value="${registeredEmail}">
+              </div>
+              <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" id="password" name="password" class="form-control"
+                       autocomplete="current-password" required>
+              </div>
+                <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="remember-me" name="remember-me">
+                <label class="form-check-label" for="remember-me">Keep me logged in for 14 days</label>
+              </div>
+              <button type="submit" class="btn btn-primary w-100">Log in</button>
+            </form>
+
+            <p class="small text-center text-body-secondary mt-4 mb-0">
+              New to CareerPilot? <a th:href="@{/register}">Create an account</a>
+            </p>
+          </div>
+        </div>
+
+        <div class="alert alert-light border small mt-3 mb-0" th:if="${demoEmail != null}">
+          <i class="bi bi-info-circle me-1"></i>
+          Demo account: <code th:text="${demoEmail}">demo@careerpilot.local</code>
+          / <code th:text="${demoPassword}">Password123!</code>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>
