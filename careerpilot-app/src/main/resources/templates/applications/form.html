@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head(${editing} ? 'Edit application' : 'Add application')}"></head>
+<body class="d-flex flex-column min-vh-100">
+<nav th:replace="~{fragments/layout :: navbar('applications')}"></nav>
+
+<main class="flex-grow-1 py-4">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-9 col-xl-8">
+
+        <a class="small text-decoration-none"
+           th:href="${editing} ? @{/applications/{id}(id=${applicationId})} : @{/applications}">
+          <i class="bi bi-arrow-left"></i>
+          <span th:text="${editing} ? 'Back to application' : 'All applications'">All applications</span>
+        </a>
+        <h1 class="h3 mt-2 mb-4" th:text="${editing} ? 'Edit application' : 'Add an application'">Add an application</h1>
+
+        <!-- Same template for add and edit: only the action URL and labels change -->
+        <form th:action="${editing} ? @{/applications/{id}(id=${applicationId})} : @{/applications}"
+              th:object="${applicationForm}" method="post" novalidate>
+
+          <div class="alert alert-danger" role="alert" th:if="${#fields.hasErrors('*')}">
+            <i class="bi bi-exclamation-triangle me-1"></i>Please fix the highlighted fields.
+          </div>
+
+          <!-- The job -->
+          <div class="card cp-card mb-3">
+            <div class="card-body p-4">
+              <h2 class="h6 mb-3">The job</h2>
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label for="companyName" class="form-label">Company <span class="text-danger">*</span></label>
+                  <input type="text" th:field="*{companyName}" class="form-control" th:errorclass="is-invalid"
+                         maxlength="150" autofocus>
+                  <div class="invalid-feedback" th:errors="*{companyName}">Error</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="jobTitle" class="form-label">Job title <span class="text-danger">*</span></label>
+                  <input type="text" th:field="*{jobTitle}" class="form-control" th:errorclass="is-invalid"
+                         maxlength="150">
+                  <div class="invalid-feedback" th:errors="*{jobTitle}">Error</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="location" class="form-label">Location</label>
+                  <input type="text" th:field="*{location}" class="form-control" th:errorclass="is-invalid"
+                         maxlength="120" placeholder="Nairobi, Remote, Hybrid…">
+                  <div class="invalid-feedback" th:errors="*{location}">Error</div>
+                </div>
+                <div class="col-md-6">
+                  <label for="applicationDate" class="form-label">Date applied</label>
+                  <input type="date" th:field="*{applicationDate}" class="form-control" th:errorclass="is-invalid"
+                         aria-describedby="applicationDateHelp">
+                  <div id="applicationDateHelp" class="form-text">Leave empty if you've only saved the job for later.</div>
+                  <div class="invalid-feedback" th:errors="*{applicationDate}">Error</div>
+                </div>
+                <div class="col-12">
+                  <label for="applicationLink" class="form-label">Link to the job posting</label>
+                  <input type="url" th:field="*{applicationLink}" class="form-control" th:errorclass="is-invalid"
+                         maxlength="500" placeholder="https://">
+                  <div class="invalid-feedback" th:errors="*{applicationLink}">Error</div>
+                </div>
+                <div class="col-12">
+                  <label for="jobDescription" class="form-label">Job description</label>
+                  <textarea th:field="*{jobDescription}" class="form-control" th:errorclass="is-invalid" rows="8"
+                            aria-describedby="jobDescriptionHelp"></textarea>
+                  <div id="jobDescriptionHelp" class="form-text">Paste the full description. You'll use it for CV matching later.</div>
+                  <div class="invalid-feedback" th:errors="*{jobDescription}">Error</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recruiter -->
+          <div class="card cp-card mb-4">
+            <div class="card-body p-4">
+              <h2 class="h6 mb-1">Recruiter <span class="text-body-secondary fw-normal">(optional)</span></h2>
+              <p class="small text-body-secondary mb-3">Who you're talking to about this role.</p>
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label for="recruiterName" class="form-label">Name</label>
+                  <input type="text" th:field="*{recruiterName}" class="form-control" maxlength="120"
+                         th:classappend="${#fields.hasErrors('recruiterName') or #fields.hasErrors('recruiterNameProvided')} ? 'is-invalid'">
+                  <div class="invalid-feedback" th:errors="*{recruiterName}">Error</div>
+                  <div class="invalid-feedback" th:errors="*{recruiterNameProvided}">Error</div>
+                </div>
+                <div class="col-md-4">
+                  <label for="recruiterEmail" class="form-label">Email</label>
+                  <input type="email" th:field="*{recruiterEmail}" class="form-control" th:errorclass="is-invalid"
+                         maxlength="254">
+                  <div class="invalid-feedback" th:errors="*{recruiterEmail}">Error</div>
+                </div>
+                <div class="col-md-4">
+                  <label for="recruiterPhone" class="form-label">Phone</label>
+                  <input type="tel" th:field="*{recruiterPhone}" class="form-control" th:errorclass="is-invalid"
+                         maxlength="40" placeholder="+254…">
+                  <div class="invalid-feedback" th:errors="*{recruiterPhone}">Error</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2">
+            <a class="btn btn-outline-secondary"
+               th:href="${editing} ? @{/applications/{id}(id=${applicationId})} : @{/applications}">Cancel</a>
+            <button type="submit" class="btn btn-primary"
+                    th:text="${editing} ? 'Save changes' : 'Add application'">Add application</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+<th:block th:replace="~{fragments/layout :: scripts}"></th:block>
+</body>
+</html>
