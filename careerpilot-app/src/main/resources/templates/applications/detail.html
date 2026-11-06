@@ -50,18 +50,64 @@
           </div>
         </div>
 
-        <div class="card cp-card">
+              <div class="card cp-card">
           <div class="card-body">
-            <h2 class="h6 mb-3">Notes</h2>
-            <p class="mb-0 cp-prewrap small" th:if="${!#strings.isEmpty(jobApplication.notes)}"
-               th:text="${jobApplication.notes}">[2026-11-02] Note</p>
-            <p class="mb-0 text-body-secondary" th:if="${#strings.isEmpty(jobApplication.notes)}">No notes yet.</p>
+            <div class="d-flex justify-content-between align-items-baseline mb-3">
+              <h2 class="h6 mb-0">Notes &amp; history</h2>
+              <span class="small text-body-secondary"
+                    th:text="${#lists.size(noteEntries)} + (${#lists.size(noteEntries)} == 1 ? ' entry' : ' entries')">2 entries</span>
+            </div>
+
+            <form th:action="@{/applications/{id}/notes(id=${jobApplication.id})}" method="post" class="mb-4">
+              <label for="note" class="visually-hidden">New note</label>
+              <textarea id="note" name="note" class="form-control" rows="2" required
+                        th:attr="maxlength=${noteMaxLength}"
+                        placeholder="What happened? e.g. Sent a thank-you email to Jane"></textarea>
+              <div class="d-flex justify-content-end mt-2">
+                <button type="submit" class="btn btn-sm btn-primary">
+                  <i class="bi bi-plus-lg me-1"></i>Add note
+                </button>
+              </div>
+            </form>
+
+            <p class="mb-0 small text-body-secondary" th:if="${#lists.isEmpty(noteEntries)}">
+              No notes yet. Status changes and interviews will appear here automatically.
+            </p>
+
+            <ul class="list-unstyled cp-timeline mb-0" th:unless="${#lists.isEmpty(noteEntries)}">
+              <li class="cp-timeline-item" th:each="entry : ${noteEntries}">
+                <div class="small text-body-secondary"
+                     th:text="${entry.date() != null} ? ${#temporals.format(entry.date(), 'EEE d MMM yyyy')} : 'Undated'">Mon 16 Nov 2026</div>
+                <div th:text="${entry.text()}">Note text</div>
+              </li>
+            </ul>
           </div>
         </div>
-      </div>
 
       <!-- Side column -->
       <div class="col-lg-4 d-grid gap-3 align-content-start">
+                <!-- Progress: only the moves Status allows are offered -->
+        <div class="card cp-card">
+          <div class="card-body">
+            <h2 class="h6 mb-3">Progress</h2>
+
+            <p class="small text-body-secondary mb-0" th:if="${jobApplication.status.closed}">
+              <i class="bi bi-flag me-1"></i>Final outcome reached. No further status changes.
+            </p>
+
+            <form th:unless="${jobApplication.status.closed}"
+                  th:action="@{/applications/{id}/status(id=${jobApplication.id})}" method="post">
+              <label for="status" class="form-label small text-body-secondary mb-1">Move this application to</label>
+              <div class="input-group input-group-sm">
+                <select id="status" name="status" class="form-select">
+                  <option th:each="s : ${jobApplication.status.allowedNext()}"
+                          th:value="${s}" th:text="${s.label}">Applied</option>
+                </select>
+                <button type="submit" class="btn btn-primary">Update</button>
+              </div>
+            </form>
+          </div>
+        </div>
         <div class="card cp-card">
           <div class="card-body">
             <h2 class="h6 mb-3">Key dates</h2>
@@ -70,15 +116,54 @@
               <dd class="col-7"
                   th:text="${jobApplication.applicationDate != null} ? ${#temporals.format(jobApplication.applicationDate, 'd MMM yyyy')} : '—'">—</dd>
               <dt class="col-5 fw-normal text-body-secondary">Interview</dt>
-              <dd class="col-7"
-                  th:text="${jobApplication.interviewDate != null} ? ${#temporals.format(jobApplication.interviewDate, 'EEE d MMM yyyy')} : '—'">—</dd>
+              <dd class="col-7">
+                <span th:text="${jobApplication.interviewDate != null} ? ${#temporals.format(jobApplication.interviewDate, 'EEE d MMM yyyy')} : '—'">—</span>
+                <span class="badge text-bg-warning ms-1"
+                      th:if="${today != null and jobApplication.interviewDate == today}">Today</span>
+              </dd>
               <dt class="col-5 fw-normal text-body-secondary">Follow up</dt>
-              <dd class="col-7 mb-0"
-                  th:text="${jobApplication.followUpDate != null} ? ${#temporals.format(jobApplication.followUpDate, 'd MMM yyyy')} : '—'">—</dd>
+                <dd class="col-7 mb-0">
+                <span th:text="${jobApplication.followUpDate != null} ? ${#temporals.format(jobApplication.followUpDate, 'd MMM yyyy')} : '—'">—</span>
+                <span class="badge text-bg-danger ms-1"
+                      th:if="${today != null and jobApplication.isFollowUpOverdue(today)}">Overdue</span>
+                <span class="badge text-bg-warning ms-1"
+                      th:if="${today != null and jobApplication.followUpDate == today}">Due today</span>
+              </dd>
             </dl>
             <a th:if="${jobApplication.applicationLink != null}" th:href="${jobApplication.applicationLink}"
                target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary mt-3">
               View job posting <i class="bi bi-box-arrow-up-right ms-1"></i>
+            </a>
+
+            <hr class="my-3">
+
+            <!-- Interview: only while the application is Applied or Interview -->
+            <form th:if="${jobApplication.status.active}" class="mb-3"
+                  th:action="@{/applications/{id}/interview(id=${jobApplication.id})}" method="post">
+              <label for="interviewDate" class="form-label small text-body-secondary mb-1"
+                     th:text="${jobApplication.interviewDate != null} ? 'Reschedule interview' : 'Schedule interview'">Schedule interview</label>
+              <div class="input-group input-group-sm">
+                <input type="date" id="interviewDate" name="date" class="form-control" required
+                       th:value="${jobApplication.interviewDate}" th:attr="min=${today}">
+                <button type="submit" class="btn btn-outline-primary">Save</button>
+              </div>
+            </form>
+
+            <!-- Follow-up: any time before a final outcome -->
+            <form th:unless="${jobApplication.status.closed}"
+                  th:action="@{/applications/{id}/follow-up(id=${jobApplication.id})}" method="post">
+              <label for="followUpDate" class="form-label small text-body-secondary mb-1">Follow-up reminder</label>
+              <div class="input-group input-group-sm">
+                <input type="date" id="followUpDate" name="date" class="form-control"
+                       th:value="${jobApplication.followUpDate}" th:attr="min=${today}">
+                <button type="submit" class="btn btn-outline-primary">Save</button>
+              </div>
+              <div class="form-text">Leave the date empty and save to clear the reminder.</div>
+            </form>
+
+            <p class="small text-body-secondary mb-0" th:if="${jobApplication.status.closed}">
+              Dates are locked because this application is closed.
+            </p>
             </a>
           </div>
         </div>

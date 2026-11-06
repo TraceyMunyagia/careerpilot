@@ -1,5 +1,8 @@
 package com.careerpilot.model;
 
+
+import com.careerpilot.exception.BusinessRuleException;
+import com.careerpilot.exception.InvalidStatusTransitionException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -136,10 +139,79 @@ public class JobApplication extends BaseEntity {
     public String getNotes() { return notes; }
 
     /** Appends a note dated with the given day on its own line. */
+       public static final int MAX_NOTE_LENGTH = 2000;
+
+    /**
+     * Appends a note dated with the given day. Line breaks inside a note become spaces,
+     * so one note is always exactly one line: "[2026-11-16] text".
+     */
     public void addNote(String note, LocalDate date) {
-        String line = "[" + date + "] " + requireText(note, "Note");
-        notes = notes.isEmpty() ? line : notes + System.lineSeparator() + line;
+        if (note == null || note.isBlank()) {
+            throw new BusinessRuleException("Write something before adding a note");
+        }
+        String text = note.strip().replaceAll("\\s*\\R\\s*", " ");
+        if (text.length() > MAX_NOTE_LENGTH) {
+            throw new BusinessRuleException("Notes can be at most " + MAX_NOTE_LENGTH + " characters");
+        }
+        String line = "[" + date + "] " + text;
+        notes = notes.isEmpty() ? line : notes + "\n" + line;
     }
+    // ---------- workflow (Week 7): the rules live with the data they protect ----------
+    // Each method checks everything first and only then changes fields,
+    // so a broken rule leaves the application exactly as it was.
+
+    /**
+     * Moves to the next status if Status allows it.
+     * Moving to APPLIED without a date stamps today (the same rule as the Week 2 console app).
+     * Closing an application (Rejected/Offer) clears its follow-up reminder.
+     */
+    public void changeStatus(Status next, LocalDate today) {
+        if (next == null) {
+            throw new BusinessRuleException("Choose a status");
+        }
+        if (status == next || !status.canMoveTo(next)) {
+            throw new InvalidStatusTransitionException(status, next);
+        }
+        status = next;
+        if (next == Status.APPLIED && applicationDate == null) {
+            applicationDate = today;
+        }
+        if (next.isClosed()) {
+            followUpDate = null;
+        }
+    }
+
+    /** Only Applied or Interview applications can have interviews. Applied moves to Interview. */
+    public void scheduleInterview(LocalDate date, LocalDate today) {
+        if (date == null) {
+            throw new BusinessRuleException("Choose an interview date");
+        }
+        if (date.isBefore(today)) {
+            throw new BusinessRuleException("Interview date cannot be in the past");
+        }
+        if (status != Status.APPLIED && status != Status.INTERVIEW) {
+            throw new BusinessRuleException("Interviews can only be scheduled for Applied or Interview applications (this one is "
+                    + status.getLabel() + ")");
+        }
+        status = Status.INTERVIEW;
+        interviewDate = date;
+    }
+
+    /** null clears the reminder. Closed applications don't need follow-ups. */
+    public void scheduleFollowUp(LocalDate date, LocalDate today) {
+        if (date == null) {
+            followUpDate = null;
+            return;
+        }
+        if (status.isClosed()) {
+            throw new BusinessRuleException("No follow-up needed: this application is " + status.getLabel());
+        }
+        if (date.isBefore(today)) {
+            throw new BusinessRuleException("Follow-up date cannot be in the past");
+        }
+        followUpDate = date;
+    }
+
 
     // ---------- date helpers (from Week 1) ----------
 

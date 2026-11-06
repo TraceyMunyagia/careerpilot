@@ -2,11 +2,15 @@ package com.careerpilot.controller;
 
 import com.careerpilot.dto.ApplicationForm;
 import com.careerpilot.dto.ApplicationSummary;
+import com.careerpilot.dto.NoteEntry;
+import com.careerpilot.exception.ApplicationNotFoundException;
+import com.careerpilot.exception.CareerPilotException;
 import com.careerpilot.model.JobApplication;
 import com.careerpilot.model.Status;
 import com.careerpilot.service.JobApplicationService;
 import jakarta.validation.Valid;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -19,6 +23,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.time.LocalDate;
 
 @Controller
 @RequestMapping("/applications")
@@ -46,15 +52,20 @@ public class ApplicationController {
     public String list(@RequestParam(required = false) Status status, Model model) {
         model.addAttribute("statuses", Status.values());
         model.addAttribute("selectedStatus", status);
-        model.addAttribute("applications", jobApplicationService.listForCurrentUser(status));
+               model.addAttribute("applications", jobApplicationService.listForCurrentUser(status));
+        model.addAttribute("today", jobApplicationService.today());
         return "applications/list";
     }
 
     /** GET /applications/5. Throws ApplicationNotFoundException (→ 404) if missing or not yours. */
     @GetMapping("/{id}")
     public String detail(@PathVariable long id, Model model) {
+        JobApplication application = jobApplicationService.getForCurrentUser(id);
         // Not "application": Thymeleaf reserves ${application} for servlet-context attributes
-        model.addAttribute("jobApplication", jobApplicationService.getForCurrentUser(id));
+        model.addAttribute("jobApplication", application);
+        model.addAttribute("today", jobApplicationService.today());
+        model.addAttribute("noteEntries", NoteEntry.parse(application.getNotes()));
+        model.addAttribute("noteMaxLength", JobApplication.MAX_NOTE_LENGTH);
         return "applications/detail";
     }
 
@@ -118,6 +129,63 @@ public class ApplicationController {
         redirectAttributes.addFlashAttribute("successMessage",
                 "Deleted " + deleted.jobTitle() + " at " + deleted.companyName() + ".");
         return "redirect:/applications";
+    }
+
+    // ---------- workflow actions: all POST, all redirect back to the detail page ----------
+
+    @PostMapping("/{id}/status")
+    public String changeStatus(@PathVariable long id,
+                               @RequestParam(required = false) Status status,
+                               RedirectAttributes redirectAttributes) {
+        return runAction(id, redirectAttributes,
+                () -> jobApplicationService.changeStatus(id, status),
+                "Status changed to " + (status == null ? "" : status.getLabel()) + ".");
+    }
+        /** An empty date field arrives as null, which the service rejects with a friendly message. */
+    @PostMapping("/{id}/interview")
+    public String scheduleInterview(@PathVariable long id,
+                                    @RequestParam(required = false)
+                                    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                    RedirectAttributes redirectAttributes) {
+        return runAction(id, redirectAttributes,
+                () -> jobApplicationService.scheduleInterview(id, date),
+                date == null ? "" : "Interview scheduled for " + JobApplicationService.DISPLAY_DATE.format(date) + ".");
+    }
+
+    /** Here an empty date field is meaningful: it clears the reminder. */
+    @PostMapping("/{id}/follow-up")
+    public String scheduleFollowUp(@PathVariable long id,
+                                   @RequestParam(required = false)
+                                   @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+                                   RedirectAttributes redirectAttributes) {
+        String message = (date == null)
+                ? "Follow-up reminder cleared."
+                : "Follow-up reminder set for " + JobApplicationService.DISPLAY_DATE.format(date) + ".";
+        return runAction(id, redirectAttributes,
+                () -> jobApplicationService.scheduleFollowUp(id, date),
+                message);
+    }
+        @PostMapping("/{id}/notes")
+    public String addNote(@PathVariable long id,
+                          @RequestParam(required = false) String note,
+                          RedirectAttributes redirectAttributes) {
+        return runAction(id, redirectAttributes,
+                () -> jobApplicationService.addNote(id, note),
+                "Note added.");
+    }
+
+    /** Runs a workflow action and redirects back to the detail page. */
+    private String runAction(long id, RedirectAttributes redirectAttributes,
+                             Runnable action, String successMessage) {
+        try {
+            action.run();
+            redirectAttributes.addFlashAttribute("successMessage", successMessage);
+        } catch (ApplicationNotFoundException e) {
+            throw e; // still the 404 page: never reveal whether someone else's id exists
+        } catch (CareerPilotException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/applications/" + id;
     }
      
 }

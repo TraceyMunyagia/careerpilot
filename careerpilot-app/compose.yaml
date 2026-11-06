@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: careerpilot
       POSTGRES_PASSWORD: careerpilot
     ports:
-      - "5434:5432"            # host:container (5434 avoids clashing with a local Homebrew Postgres)
+      - "5435:5432"            # host:container (5435 avoids clashing with a local Homebrew Postgres)
     volumes:
       - careerpilot-data:/var/lib/postgresql/data   # data survives container restarts
     healthcheck:

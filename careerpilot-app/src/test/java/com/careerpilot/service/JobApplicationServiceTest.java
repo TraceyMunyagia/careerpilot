@@ -3,6 +3,8 @@ package com.careerpilot.service;
 import com.careerpilot.dto.ApplicationForm;
 import com.careerpilot.dto.ApplicationSummary;
 import com.careerpilot.exception.ApplicationNotFoundException;
+import com.careerpilot.exception.BusinessRuleException;
+import com.careerpilot.exception.InvalidStatusTransitionException;
 import com.careerpilot.model.JobApplication;
 import com.careerpilot.model.RecruiterContact;
 import com.careerpilot.model.Status;
@@ -15,7 +17,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,9 +47,13 @@ class JobApplicationServiceTest {
 
     private JobApplicationService service;
 
+       private static final ZoneId NAIROBI = ZoneId.of("Africa/Nairobi");
+    private static final LocalDate TODAY = LocalDate.of(2026, 11, 16); // a Monday
+
     @BeforeEach
     void setUp() {
-        service = new JobApplicationService(repository, currentUserService);
+        Clock fixedClock = Clock.fixed(TODAY.atStartOfDay(NAIROBI).toInstant(), NAIROBI);
+        service = new JobApplicationService(repository, currentUserService, fixedClock);
     }
 
     // ---------- helpers ----------
@@ -186,6 +194,88 @@ class JobApplicationServiceTest {
 
             verify(repository).findByOwnerIdAndStatusOrderByApplicationDateDesc(USER_ID, Status.OFFER);
             verify(repository, never()).findAllForOwner(any());
+        }
+    }
+
+    @Nested
+    class Workflow {
+
+        @Test
+        void statusChangeIsRecordedAsADatedNote() {
+            JobApplication app = givenOwnedApplication(5L); // APPLIED
+
+            service.changeStatus(5L, Status.INTERVIEW);
+
+            assertThat(app.getStatus()).isEqualTo(Status.INTERVIEW);
+            assertThat(app.getNotes()).isEqualTo("[2026-11-16] Status changed from Applied to Interview");
+        }
+
+        @Test
+        void illegalStatusChangeLeavesStatusAndNotesUntouched() {
+            JobApplication app = givenOwnedApplication(5L);
+
+            assertThatThrownBy(() -> service.changeStatus(5L, Status.SAVED))
+                    .isInstanceOf(InvalidStatusTransitionException.class);
+
+            assertThat(app.getStatus()).isEqualTo(Status.APPLIED);
+            assertThat(app.getNotes()).isEmpty();
+        }
+
+        @Test
+        void schedulingAnInterviewMovesToInterviewAndLogsIt() {
+            JobApplication app = givenOwnedApplication(5L);
+
+            service.scheduleInterview(5L, TODAY.plusDays(3));
+
+            assertThat(app.getStatus()).isEqualTo(Status.INTERVIEW);
+            assertThat(app.getNotes()).isEqualTo("[2026-11-16] Interview scheduled for Thu 19 Nov 2026");
+        }
+
+        @Test
+        void reschedulingIsLoggedDifferently() {
+            JobApplication app = givenOwnedApplication(5L);
+            app.setStatus(Status.INTERVIEW);
+            app.setInterviewDate(TODAY.plusDays(1));
+
+            service.scheduleInterview(5L, TODAY.plusDays(8));
+
+            assertThat(app.getNotes()).endsWith("Interview rescheduled to Tue 24 Nov 2026");
+        }
+
+        @Test
+        void interviewInThePastIsJudgedByTheClock() {
+            givenOwnedApplication(5L);
+
+            assertThatThrownBy(() -> service.scheduleInterview(5L, TODAY.minusDays(1)))
+                    .isInstanceOf(BusinessRuleException.class);
+        }
+
+        @Test
+        void followUpCanBeSetAndCleared() {
+            JobApplication app = givenOwnedApplication(5L);
+
+            service.scheduleFollowUp(5L, TODAY.plusDays(4));
+            assertThat(app.getFollowUpDate()).isEqualTo(TODAY.plusDays(4));
+
+            service.scheduleFollowUp(5L, null);
+            assertThat(app.getFollowUpDate()).isNull();
+        }
+
+        @Test
+        void notesAreStampedWithTheClockDate() {
+            JobApplication app = givenOwnedApplication(5L);
+
+            service.addNote(5L, "Sent a thank-you email");
+
+            assertThat(app.getNotes()).isEqualTo("[2026-11-16] Sent a thank-you email");
+        }
+
+        @Test
+        void workflowActionsOnSomeoneElsesApplicationAreNotFound() {
+            givenNotOwned(42L);
+
+            assertThatThrownBy(() -> service.addNote(42L, "sneaky"))
+                    .isInstanceOf(ApplicationNotFoundException.class);
         }
     }
 }

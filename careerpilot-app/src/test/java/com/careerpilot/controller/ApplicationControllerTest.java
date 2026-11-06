@@ -5,6 +5,8 @@ import com.careerpilot.config.SecurityConfig;
 import com.careerpilot.dto.ApplicationForm;
 import com.careerpilot.dto.ApplicationSummary;
 import com.careerpilot.exception.ApplicationNotFoundException;
+import com.careerpilot.exception.BusinessRuleException;
+import com.careerpilot.exception.InvalidStatusTransitionException;
 import com.careerpilot.model.JobApplication;
 import com.careerpilot.model.RecruiterContact;
 import com.careerpilot.model.Status;
@@ -28,6 +30,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -265,6 +268,95 @@ class ApplicationControllerTest {
                     .andExpect(status().isMethodNotAllowed());
 
             verify(jobApplicationService, never()).delete(any(Long.class));
+        }
+    }
+
+        @Nested
+    class Workflow {
+
+        @Test
+        void detailOffersOnlyTheAllowedNextStatuses() throws Exception {
+            JobApplication app = application(5, "Safaricom", "Java Developer"); // SAVED
+            when(jobApplicationService.getForCurrentUser(5)).thenReturn(app);
+
+            mockMvc.perform(get("/applications/5"))
+                    .andExpect(content().string(containsString("/applications/5/status")))
+                    .andExpect(content().string(containsString("<option value=\"APPLIED\">Applied</option>")))
+                    .andExpect(content().string(not(containsString("<option value=\"OFFER\">"))))
+                    .andExpect(content().string(containsString("/applications/5/notes")));
+        }
+
+        @Test
+        void closedApplicationsHideTheWorkflowForms() throws Exception {
+            JobApplication app = application(5, "Cellulant", "Software Engineer");
+            app.setStatus(Status.REJECTED);
+            when(jobApplicationService.getForCurrentUser(5)).thenReturn(app);
+
+            mockMvc.perform(get("/applications/5"))
+                    .andExpect(content().string(containsString("Final outcome reached")))
+                    .andExpect(content().string(not(containsString("/applications/5/status"))))
+                    .andExpect(content().string(not(containsString("/applications/5/interview"))));
+        }
+
+        @Test
+        void statusChangeRedirectsBackWithASuccessMessage() throws Exception {
+            mockMvc.perform(post("/applications/5/status").with(csrf()).param("status", "INTERVIEW"))
+                    .andExpect(redirectedUrl("/applications/5"))
+                    .andExpect(flash().attribute("successMessage", "Status changed to Interview."));
+
+            verify(jobApplicationService).changeStatus(5L, Status.INTERVIEW);
+        }
+
+        @Test
+        void illegalStatusChangeBecomesARedMessage() throws Exception {
+            when(jobApplicationService.changeStatus(5L, Status.OFFER))
+                    .thenThrow(new InvalidStatusTransitionException(Status.SAVED, Status.OFFER));
+
+            mockMvc.perform(post("/applications/5/status").with(csrf()).param("status", "OFFER"))
+                    .andExpect(redirectedUrl("/applications/5"))
+                    .andExpect(flash().attribute("errorMessage", containsString("Cannot move from Saved to Offer")))
+                    .andExpect(flash().attributeCount(1)); // no success message
+        }
+
+        @Test
+        void actionsOnAMissingApplicationAreStill404() throws Exception {
+            when(jobApplicationService.changeStatus(42L, Status.APPLIED))
+                    .thenThrow(new ApplicationNotFoundException(42));
+
+            mockMvc.perform(post("/applications/42/status").with(csrf()).param("status", "APPLIED"))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void interviewDateIsReadFromTheDateInput() throws Exception {
+            mockMvc.perform(post("/applications/5/interview").with(csrf()).param("date", "2026-11-19"))
+                    .andExpect(redirectedUrl("/applications/5"))
+                    .andExpect(flash().attribute("successMessage", "Interview scheduled for Thu 19 Nov 2026."));
+
+            verify(jobApplicationService).scheduleInterview(5L, LocalDate.of(2026, 11, 19));
+        }
+
+        @Test
+        void anEmptyFollowUpDateClearsTheReminder() throws Exception {
+            mockMvc.perform(post("/applications/5/follow-up").with(csrf()).param("date", ""))
+                    .andExpect(flash().attribute("successMessage", "Follow-up reminder cleared."));
+
+            verify(jobApplicationService).scheduleFollowUp(5L, null);
+        }
+
+        @Test
+        void aRejectedNoteShowsTheReason() throws Exception {
+            when(jobApplicationService.addNote(5L, ""))
+                    .thenThrow(new BusinessRuleException("Write something before adding a note"));
+
+            mockMvc.perform(post("/applications/5/notes").with(csrf()).param("note", ""))
+                    .andExpect(flash().attribute("errorMessage", "Write something before adding a note"));
+        }
+
+        @Test
+        void workflowPostsNeedACsrfToken() throws Exception {
+            mockMvc.perform(post("/applications/5/notes").param("note", "hi"))
+                    .andExpect(status().isForbidden());
         }
     }
 

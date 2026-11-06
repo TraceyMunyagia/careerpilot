@@ -116,3 +116,41 @@ body {
 .cp-prewrap {
   white-space: pre-line; /* keep the line breaks in notes and descriptions */
 }
+
+/* ---------- Notes timeline ---------- */
+.cp-timeline {
+  position: relative;
+  padding-left: 1.25rem;
+}
+
+.cp-timeline::before { /* the vertical line */
+  content: "";
+  position: absolute;
+  left: 0.3rem;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  width: 2px;
+  background: var(--cp-border);
+}
+
+.cp-timeline-item {
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.cp-timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.cp-timeline-item::before { /* the dot */
+  content: "";
+  position: absolute;
+  left: -1.2rem;
+  top: 0.35rem;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--cp-teal-dark);
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--cp-border);
+}

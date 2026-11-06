@@ -19,6 +19,7 @@ public record ApplicationSummary(Long id,
                                  LocalDate followUpDate) {
 
     public static ApplicationSummary from(JobApplication app) {
+        
         return new ApplicationSummary(
                 app.getId(),
                 app.getCompanyName(),
@@ -28,5 +29,9 @@ public record ApplicationSummary(Long id,
                 app.getApplicationDate(),
                 app.getInterviewDate(),
                 app.getFollowUpDate());
+    }
+        /** Same rule as JobApplication.isFollowUpOverdue, for list rows. */
+    public boolean isFollowUpOverdue(LocalDate today) {
+        return followUpDate != null && followUpDate.isBefore(today) && !status.isClosed();
     }
 }

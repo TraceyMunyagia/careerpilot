@@ -63,10 +63,14 @@
             <td class="fw-semibold" th:text="${a.companyName()}">Company</td>
             <td th:text="${a.jobTitle()}">Role</td>
             <td class="d-none d-md-table-cell" th:text="${a.location() ?: '—'}">Nairobi</td>
-            <td>
+              <td>
               <span class="badge rounded-pill cp-status"
                     th:classappend="'cp-status-' + ${#strings.toLowerCase(a.status().name())}"
                     th:text="${a.status().label}">Applied</span>
+              <span class="badge rounded-pill text-bg-danger ms-1" title="Follow-up overdue"
+                    th:if="${today != null and a.isFollowUpOverdue(today)}">
+                <i class="bi bi-alarm"></i><span class="visually-hidden">Follow-up overdue</span>
+              </span>
             </td>
             <td class="d-none d-md-table-cell"
                 th:text="${a.applicationDate() != null} ? ${#temporals.format(a.applicationDate(), 'd MMM yyyy')} : '—'">
